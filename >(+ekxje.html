@@ -1,0 +1,455 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,user-scalable=no,viewport-fit=cover">
+<meta name="theme-color" content="#ffcc00">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="🐍A">
+<link rel="manifest" href="admin-manifest.json">
+<title>Админ-панель · mess🐍</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+:root{--bg:#0f0f12;--card:#1c1c1e;--card2:#2c2c2e;--text:#f2f2f7;--text2:#98989d;--border:#2c2c2e;--accent:#17a86a;--gold:#ffcc00;--danger:#ff3b30;--blue:#4285f4}
+*{margin:0;padding:0;box-sizing:border-box;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;-webkit-tap-highlight-color:transparent}
+body{background:var(--bg);color:var(--text);min-height:100vh;padding:16px;padding-bottom:calc(16px + env(safe-area-inset-bottom,0px))}
+.container{max-width:900px;margin:0 auto}
+.banner{display:none;background:linear-gradient(135deg,var(--gold),#c79b00);border-radius:14px;padding:14px;margin-bottom:16px;align-items:center;gap:10px;color:#111;font-weight:600}
+.banner.show{display:flex}
+.banner .txt{flex:1;font-size:13px;line-height:1.4}
+.banner button{background:#111;color:#fff;border:none;padding:9px 14px;border-radius:10px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit;white-space:nowrap}
+.banner .close{background:none;border:none;color:#111;font-size:22px;cursor:pointer;padding:2px 6px;font-weight:700}
+.header{display:flex;align-items:center;gap:12px;padding:16px;background:var(--card);border-radius:16px;margin-bottom:16px;border:1px solid var(--border)}
+.header .logo-small{width:44px;height:44px;border-radius:50%;background:var(--gold);display:flex;align-items:center;justify-content:center;font-size:22px}
+.header h1{font-size:18px;flex:1}
+.header .badge{background:var(--gold);color:#111;padding:4px 10px;border-radius:8px;font-size:11px;font-weight:700}
+.header button{background:none;border:none;color:var(--text2);font-size:20px;cursor:pointer;padding:6px}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(140px,1fr));gap:12px;margin-bottom:16px}
+.stat{background:var(--card);border-radius:16px;padding:16px;position:relative;overflow:hidden;border:1px solid var(--border)}
+.stat::before{content:'';position:absolute;top:0;left:0;right:0;height:3px;background:var(--accent)}
+.stat.g::before{background:var(--gold)}
+.stat.b::before{background:var(--blue)}
+.stat.r::before{background:var(--danger)}
+.stat .l{font-size:11px;color:var(--text2);text-transform:uppercase;letter-spacing:.5px}
+.stat .v{font-size:28px;font-weight:800;margin-top:4px}
+.stat .ico{position:absolute;top:14px;right:14px;font-size:22px;opacity:.3}
+.tabs{display:flex;gap:6px;margin-bottom:16px;overflow-x:auto;padding-bottom:2px}
+.tabs button{flex:1;min-width:100px;padding:12px;border-radius:12px;border:1px solid var(--border);background:var(--card);color:var(--text);font-size:14px;cursor:pointer;font-family:inherit;white-space:nowrap}
+.tabs button.active{background:var(--gold);border-color:var(--gold);color:#111;font-weight:700}
+.list{background:var(--card);border-radius:16px;overflow:hidden;border:1px solid var(--border)}
+.user{padding:14px;display:flex;gap:12px;align-items:flex-start;border-bottom:1px solid var(--border)}
+.user:last-child{border-bottom:none}
+.user .av{width:56px;height:56px;border-radius:50%;background:var(--accent);display:flex;align-items:center;justify-content:center;font-size:24px;font-weight:600;overflow:hidden;flex-shrink:0}
+.user .av img{width:100%;height:100%;object-fit:cover}
+.user .info{flex:1;min-width:0}
+.user .name{font-weight:600;font-size:15px;line-height:1.4;word-wrap:break-word}
+.user .meta{font-size:12px;color:var(--text2);margin-top:3px;line-height:1.5}
+.user .badge{display:inline-block;padding:2px 8px;border-radius:8px;font-size:11px;font-weight:600;margin-left:6px;white-space:nowrap}
+.user .badge.pending{background:rgba(255,204,0,.15);color:var(--gold)}
+.user .badge.approved{background:rgba(23,168,106,.15);color:var(--accent)}
+.user .badge.rejected{background:rgba(255,59,48,.15);color:var(--danger)}
+.user .badge.minor{background:rgba(66,133,244,.15);color:var(--blue)}
+.user .badge.banned{background:rgba(255,59,48,.25);color:var(--danger)}
+.user .badge.trusted{background:rgba(23,168,106,.25);color:var(--accent)}
+.user .badge.untrusted{background:rgba(255,204,0,.25);color:var(--gold)}
+.user .face{width:80px;height:80px;border-radius:50%;overflow:hidden;border:3px solid var(--gold);flex-shrink:0}
+.user .face img{width:100%;height:100%;object-fit:cover}
+.user .face.empty{display:flex;align-items:center;justify-content:center;font-size:28px;background:var(--card2);border-color:var(--border)}
+.actions{display:flex;gap:6px;margin-top:10px;flex-wrap:wrap}
+.actions button{padding:9px 14px;border-radius:10px;border:none;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit}
+.actions .ok{background:var(--accent);color:#fff}
+.actions .no{background:var(--danger);color:#fff}
+.actions .warn{background:var(--gold);color:#111}
+.actions .del{background:var(--card2);color:var(--danger)}
+.empty{text-align:center;padding:60px 20px;color:var(--text2);background:var(--card);border-radius:16px;border:1px solid var(--border)}
+.empty .ico{font-size:48px;margin-bottom:12px;opacity:.4}
+.empty h3{color:var(--text);font-size:16px;margin-bottom:6px}
+.empty p{font-size:13px}
+.chart-wrap{background:var(--card);border-radius:16px;padding:16px;border:1px solid var(--border);margin-bottom:16px}
+.chart-title{font-size:12px;color:var(--text2);text-transform:uppercase;letter-spacing:.5px;margin-bottom:12px}
+.chart{display:flex;align-items:flex-end;gap:6px;height:140px;padding-top:10px}
+.chart .bar-wrap{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%}
+.chart .bar{width:100%;background:linear-gradient(180deg,var(--gold),#a07c00);border-radius:6px 6px 0 0;min-height:4px;transition:height .4s}
+.chart .val{font-size:10px;color:var(--text2);margin-bottom:2px}
+.chart .lbl{font-size:10px;color:var(--text2);margin-top:6px;text-align:center}
+.access-note{background:var(--card);border-radius:16px;padding:16px;border:1px solid var(--border);margin-bottom:16px;font-size:12px;color:var(--text2);line-height:1.6;text-align:center}
+.loading{text-align:center;padding:40px;color:var(--text2);font-size:14px}
+.toast{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);background:#333;color:#fff;padding:12px 20px;border-radius:12px;font-size:14px;display:none;z-index:100;max-width:90%;text-align:center}
+.toast.show{display:block}
+.toast.err{background:var(--danger)}
+.modal-bg{position:fixed;inset:0;background:rgba(0,0,0,.7);display:none;align-items:center;justify-content:center;padding:20px;z-index:150}
+.modal-bg.show{display:flex}
+.modal{background:var(--card);border-radius:20px;padding:22px;width:100%;max-width:360px;text-align:center;border:1px solid var(--border);max-height:88vh;overflow-y:auto}
+.modal h3{font-size:18px;margin-bottom:10px}
+.modal p{font-size:13px;color:var(--text2);margin-bottom:16px;line-height:1.5}
+.modal .dur-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:6px;margin-bottom:12px}
+.modal .dur-grid button{padding:12px;border-radius:10px;border:1px solid var(--border);background:var(--card2);color:var(--text);font-size:13px;font-weight:600;cursor:pointer;font-family:inherit}
+.modal .dur-grid button.active{background:var(--gold);color:#111;border-color:var(--gold)}
+.modal .dur-grid button.permanent{grid-column:span 3;background:rgba(255,59,48,.15);color:var(--danger);border-color:rgba(255,59,48,.3)}
+.modal .dur-grid button.permanent.active{background:var(--danger);color:#fff}
+.modal input{width:100%;padding:12px 14px;border-radius:12px;border:1px solid var(--border);background:var(--card2);color:var(--text);font-size:14px;outline:none;margin-bottom:12px;font-family:inherit}
+.modal .row{display:flex;gap:8px;margin-top:8px}
+.modal .row button{flex:1;padding:13px;border-radius:12px;border:none;font-size:14px;font-weight:600;cursor:pointer;font-family:inherit}
+.modal .row .cancel{background:var(--card2);color:var(--text)}
+.modal .row .confirm{background:var(--danger);color:#fff}
+.modal .row .ok-btn{background:var(--gold);color:#111}
+.modal .user-info{background:var(--card2);border-radius:12px;padding:12px;margin-bottom:16px;font-size:13px;text-align:left;line-height:1.5}
+</style>
+</head>
+<body>
+<div class="container">
+
+<!-- Баннер установки -->
+<div class="banner" id="install-banner">
+<div class="txt">📱 Установите админку как приложение — будет открываться без браузера</div>
+<button onclick="installPWA()">Установить</button>
+<button class="close" onclick="closeBanner()">×</button>
+</div>
+
+<div class="header">
+<div class="logo-small">🐍</div>
+<h1>Админ-панель</h1>
+<span class="badge" id="status-badge">загрузка</span>
+<button onclick="reloadAll()" title="Обновить">🔄</button>
+</div>
+
+<div class="stats">
+<div class="stat"><div class="l">Всего</div><div class="v" id="s-total">0</div><div class="ico">👥</div></div>
+<div class="stat g"><div class="l">Активных</div><div class="v" id="s-active">0</div><div class="ico">✅</div></div>
+<div class="stat b"><div class="l">На проверке</div><div class="v" id="s-pending">0</div><div class="ico">🕐</div></div>
+<div class="stat r"><div class="l">Забанено</div><div class="v" id="s-banned">0</div><div class="ico">🚫</div></div>
+</div>
+
+<div class="tabs">
+<button id="t-check" class="active" onclick="switchTab('check')">🕐 Проверка</button>
+<button id="t-users" onclick="switchTab('users')">👥 Пользователи</button>
+<button id="t-trust" onclick="switchTab('trust')">🔍 Без -NT</button>
+<button id="t-stats" onclick="switchTab('stats')">📊 Статистика</button>
+</div>
+
+<div id="content"><div class="loading">Загрузка...</div></div>
+<div class="access-note">🔒 Переписки не читаются. Только метрики и модерация.</div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<div class="modal-bg" id="m-ban">
+<div class="modal">
+<h3>🚫 Забанить</h3>
+<div class="user-info" id="ban-user-info"></div>
+<p>Выберите срок:</p>
+<div class="dur-grid" id="ban-durations">
+<button data-days="1" onclick="selectDur(1,this)">1 день</button>
+<button data-days="3" onclick="selectDur(3,this)">3 дня</button>
+<button data-days="7" onclick="selectDur(7,this)">7 дней</button>
+<button data-days="30" onclick="selectDur(30,this)">30 дней</button>
+<button data-days="90" onclick="selectDur(90,this)">90 дней</button>
+<button data-days="365" onclick="selectDur(365,this)">1 год</button>
+<button class="permanent" data-days="-1" onclick="selectDur(-1,this)">🚫 Навсегда</button>
+</div>
+<input type="text" id="ban-reason" placeholder="Причина (необязательно)">
+<div class="row">
+<button class="cancel" onclick="closeM('m-ban')">Отмена</button>
+<button class="confirm" onclick="confirmBan()">Забанить</button>
+</div>
+</div>
+</div>
+
+<div class="modal-bg" id="m-unban">
+<div class="modal">
+<h3>✅ Разбанить</h3>
+<div class="user-info" id="unban-user-info"></div>
+<p>Пользователь снова сможет пользоваться мессенджером.</p>
+<div class="row">
+<button class="cancel" onclick="closeM('m-unban')">Отмена</button>
+<button class="ok-btn" onclick="confirmUnban()">Разбанить</button>
+</div>
+</div>
+</div>
+
+<div class="modal-bg" id="m-del">
+<div class="modal">
+<h3>🗑️ Удалить аккаунт?</h3>
+<div class="user-info" id="del-user-info"></div>
+<p>Все данные и сообщения будут удалены безвозвратно.</p>
+<div class="row">
+<button class="cancel" onclick="closeM('m-del')">Отмена</button>
+<button class="confirm" onclick="confirmDelete()">Удалить</button>
+</div>
+</div>
+</div>
+
+<script>
+const SB_URL='https://aglyhueqgvteztgrhwcc.supabase.co';
+const SB_KEY='eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFnbHlodWVxZ3Z0ZXp0Z3Jod2NjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTE1NDk0NTIsImV4cCI6MjEwNzEyNTQ1Mn0.suTTSI3CpqhI1YLVGEJ7UTSfah8f9aMcSkO-GOUn8vY';
+const sb=window.supabase.createClient(SB_URL,SB_KEY);
+
+let allUsers=[],allMsgs=[],allChats=[];
+let tab='check',targetUserId=null,selectedDays=3;
+let deferredPrompt=null;
+let autoTimer=null;
+
+function toast(t,err){const e=document.getElementById('toast');e.textContent=t;e.classList.add('show');if(err)e.classList.add('err');setTimeout(()=>e.classList.remove('show','err'),2500)}
+function esc(s){return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;')}
+function ageOf(u){if(!u.birth_date)return null;return Math.floor((Date.now()-new Date(u.birth_date))/(365.25*864e5))}
+function avatarHTML(u){const a=u.avatar;if(!a)return '😀';if(typeof a==='string')return a;if(a.type==='image')return `<img src="${a.value}">`;return a.value||'😀'}
+function openM(id){document.getElementById(id).classList.add('show')}
+function closeM(id){document.getElementById(id).classList.remove('show')}
+function isBanned(u){if(!u.banned_until)return false;return new Date(u.banned_until).getTime()>Date.now()}
+function isPermanentBan(u){if(!u.banned_until)return false;return new Date(u.banned_until).getFullYear()>2900}
+function daysLeft(u){if(!isBanned(u))return 0;return Math.ceil((new Date(u.banned_until).getTime()-Date.now())/86400000)}
+
+/* PWA */
+window.addEventListener('beforeinstallprompt',e=>{e.preventDefault();deferredPrompt=e;showBanner()});
+window.addEventListener('appinstalled',()=>{toast('Приложение установлено');closeBanner()});
+function showBanner(){
+if(localStorage.getItem('banner_closed')==='1')return;
+document.getElementById('install-banner').classList.add('show');
+}
+function closeBanner(){document.getElementById('install-banner').classList.remove('show');localStorage.setItem('banner_closed','1')}
+async function installPWA(){
+if(deferredPrompt){deferredPrompt.prompt();const c=await deferredPrompt.userChoice;if(c.outcome==='accepted'){toast('Устанавливается...');closeBanner()}deferredPrompt=null}
+else{toast('Открой меню браузера → Установить приложение',true)}
+}
+
+/* Загрузка */
+async function loadAll(){
+const {data:u,error:eu}=await sb.from('profiles').select('*').order('created_at',{ascending:false});
+if(eu){console.error(eu);return false}
+allUsers=u||[];
+const {data:m}=await sb.from('messages').select('id,kind,sender_id,created_at,chat_id');
+allMsgs=m||[];
+const {data:c}=await sb.from('chats').select('*');
+allChats=c||[];
+return true;
+}
+
+async function reloadAll(){await loadAll();render();toast('Обновлено');}
+
+function switchTab(t){tab=t;['check','users','trust','stats'].forEach(x=>{const el=document.getElementById('t-'+x);if(el)el.classList.toggle('active',x===t)});render()}
+
+function render(){
+renderStats();
+const c=document.getElementById('content');
+try{
+if(tab==='check')c.innerHTML=renderCheck();
+else if(tab==='users')c.innerHTML=renderUsers();
+else if(tab==='trust')c.innerHTML=renderTrust();
+else if(tab==='stats')c.innerHTML=renderStats2();
+}catch(e){c.innerHTML=`<div class="empty"><div class="ico">⚠️</div><h3>Ошибка</h3><p>${esc(e.message)}</p></div>`}
+}
+
+function realUsers(){return allUsers.filter(u=>u.nick!=='demo_bot')}
+
+function renderStats(){
+const users=realUsers();
+const total=users.length;
+const active=users.filter(u=>u.status==='approved'&&!isBanned(u)).length;
+const pending=users.filter(u=>u.status==='pending').length;
+const banned=users.filter(u=>isBanned(u)).length;
+document.getElementById('s-total').textContent=total;
+document.getElementById('s-active').textContent=active;
+document.getElementById('s-pending').textContent=pending;
+document.getElementById('s-banned').textContent=banned;
+document.getElementById('status-badge').textContent=total+' польз.';
+}
+
+function userCard(u,withFace){
+const age=ageOf(u);
+const isMinor=age!==null&&age>=13&&age<18;
+const status=u.status||'approved';
+const banned=isBanned(u);
+const permBan=isPermanentBan(u);
+const dl=daysLeft(u);
+let statusBadge='';
+if(banned){statusBadge=permBan?'<span class="badge banned">🚫 Навсегда</span>':`<span class="badge banned">🚫 Бан ${dl} дн.</span>`}
+else if(status==='pending'){statusBadge='<span class="badge pending">🕐 На проверке</span>'}
+else if(status==='rejected'){statusBadge='<span class="badge rejected">❌ Отклонён</span>'}
+else{statusBadge='<span class="badge approved">✅ Активен</span>'}
+const minorBadge=isMinor?'<span class="badge minor">👶 13–17</span>':'';
+const trustedBadge=u.trusted?'<span class="badge trusted">🔒 -NT</span>':'<span class="badge untrusted">⚠️ Без -NT</span>';
+const faceHTML=withFace?(u.verification_photo?`<div class="face"><img src="${u.verification_photo}"></div>`:`<div class="face empty">📷</div>`):'';
+let actions='';
+if(withFace){
+actions=`<div class="actions">
+<button class="ok" onclick="approve('${u.id}')">✅ Одобрить</button>
+<button class="no" onclick="reject('${u.id}')">❌ Отклонить</button>
+<button class="del" onclick="openDelete('${u.id}')">🗑️</button>
+</div>`;
+}else{
+actions=`<div class="actions">
+${!banned&&status!=='approved'?`<button class="ok" onclick="approve('${u.id}')">✅ Одобрить</button>`:''}
+${!banned?`<button class="warn" onclick="openBan('${u.id}')">🚫 Забанить</button>`:`<button class="ok" onclick="openUnban('${u.id}')">✅ Разбанить</button>`}
+<button class="del" onclick="openDelete('${u.id}')">🗑️ Удалить</button>
+</div>`;
+}
+return`<div class="user">
+<div class="av">${avatarHTML(u)}</div>
+<div class="info">
+<div class="name">${esc(u.first_name||'')} ${esc(u.last_name||'')}${statusBadge}${minorBadge}</div>
+<div class="meta">@${esc(u.nick)} · +${esc(u.phone||'')}<br>
+Возраст: <b>${age!==null?age+' лет':'—'}</b> · ${new Date(u.created_at).toLocaleDateString('ru-RU')}
+${u.ban_reason?'<br>📝 '+esc(u.ban_reason):''}
+${u.parent_phone?'<br>📞 Родитель: +'+esc(u.parent_phone):''}
+<br>${trustedBadge}
+</div>${actions}</div>${faceHTML}</div>`;
+}
+
+function renderCheck(){
+const pending=realUsers().filter(u=>u.status==='pending');
+if(!pending.length)return`<div class="empty"><div class="ico">✅</div><h3>Нет заявок</h3><p>Все проверены</p></div>`;
+return`<div class="list">${pending.map(u=>userCard(u,true)).join('')}</div>`;
+}
+function renderUsers(){
+const users=realUsers();
+if(!users.length)return`<div class="empty"><div class="ico">👥</div><h3>Пусто</h3><p>Никто не зарегистрировался</p></div>`;
+return`<div class="list">${users.map(u=>userCard(u,false)).join('')}</div>`;
+}
+function renderTrust(){
+const untrusted=realUsers().filter(u=>!u.trusted&&u.status==='approved'&&!isBanned(u));
+if(!untrusted.length)return`<div class="empty"><div class="ico">🔒</div><h3>Все доверенные</h3><p>Все вошли с -NT</p></div>`;
+return`<div class="access-note" style="background:rgba(255,204,0,.08);border-color:rgba(255,204,0,.3);color:var(--gold)">
+⚠️ Вошли БЕЗ -NT в пароле. Возможно, это не ваши друзья.
+</div>
+<div class="list">${untrusted.map(u=>userCard(u,false)).join('')}</div>`;
+}
+
+function renderStats2(){
+const users=realUsers();
+const total=users.length;
+const mText=allMsgs.filter(m=>m.kind==='text').length;
+const mPhoto=allMsgs.filter(m=>m.kind==='photo').length;
+const mAudio=allMsgs.filter(m=>m.kind==='audio').length;
+const mCircle=allMsgs.filter(m=>m.kind==='circle').length;
+const mStory=allMsgs.filter(m=>m.kind==='story'||m.kind==='story_video').length;
+const totalMsgs=allMsgs.filter(m=>m.kind!=='story'&&m.kind!=='story_video').length;
+const days=[];
+for(let i=6;i>=0;i--){
+const d=new Date();d.setDate(d.getDate()-i);
+const start=new Date(d.getFullYear(),d.getMonth(),d.getDate()).getTime();
+const end=start+86400000;
+const cnt=allMsgs.filter(m=>{const t=new Date(m.created_at).getTime();return t>=start&&t<end}).length;
+days.push({label:d.toLocaleDateString('ru-RU',{day:'2-digit',month:'2-digit'}),count:cnt});
+}
+const maxDay=Math.max(...days.map(d=>d.count),1);
+const ages={};
+users.forEach(u=>{const a=ageOf(u);if(a===null)return;
+if(a<13)ages['<13']=(ages['<13']||0)+1;
+else if(a<18)ages['13–17']=(ages['13–17']||0)+1;
+else if(a<25)ages['18–24']=(ages['18–24']||0)+1;
+else if(a<35)ages['25–34']=(ages['25–34']||0)+1;
+else ages['35+']=(ages['35+']||0)+1;
+});
+return`
+<div class="stats">
+<div class="stat"><div class="l">Сообщений</div><div class="v">${totalMsgs}</div><div class="ico">💬</div></div>
+<div class="stat g"><div class="l">Текст</div><div class="v">${mText}</div><div class="ico">📝</div></div>
+<div class="stat b"><div class="l">Голос</div><div class="v">${mAudio}</div><div class="ico">🎤</div></div>
+<div class="stat r"><div class="l">Фото</div><div class="v">${mPhoto}</div><div class="ico">📷</div></div>
+</div>
+<div class="stats">
+<div class="stat"><div class="l">Кружки</div><div class="v">${mCircle}</div><div class="ico">⭕</div></div>
+<div class="stat g"><div class="l">Истории</div><div class="v">${mStory}</div><div class="ico">📖</div></div>
+<div class="stat b"><div class="l">Чатов</div><div class="v">${allChats.length}</div><div class="ico">🗂️</div></div>
+<div class="stat r"><div class="l">Средн.</div><div class="v">${total?Math.round(totalMsgs/total):0}</div><div class="ico">📊</div></div>
+</div>
+<div class="chart-wrap"><div class="chart-title">📈 За 7 дней</div>
+<div class="chart">${days.map(d=>`<div class="bar-wrap"><div class="val">${d.count||''}</div><div class="bar" style="height:${Math.max(4,(d.count/maxDay)*110)}px"></div><div class="lbl">${d.label}</div></div>`).join('')}</div></div>
+<div class="chart-wrap"><div class="chart-title">👥 Возраст</div>
+${Object.keys(ages).length?Object.entries(ages).map(([k,v])=>`<div style="display:flex;align-items:center;gap:10px;margin-bottom:8px"><div style="width:70px;font-size:12px;color:var(--text2)">${k}</div><div style="flex:1;height:20px;background:var(--card2);border-radius:10px;overflow:hidden"><div style="height:100%;width:${(v/total)*100}%;background:var(--gold);border-radius:10px"></div></div><div style="width:30px;text-align:right;font-size:12px">${v}</div></div>`).join(''):'<div style="text-align:center;color:var(--text2);font-size:13px;padding:20px">Нет данных</div>'}
+</div>`;
+}
+
+function userInfoBlock(u){
+const age=ageOf(u);
+return`@${esc(u.nick)}<br>${esc(u.first_name||'')} ${esc(u.last_name||'')}<br>Возраст: ${age!==null?age+' лет':'—'}<br>Телефон: +${esc(u.phone||'')}`;
+}
+
+function openBan(id){targetUserId=id;const u=allUsers.find(x=>x.id===id);if(!u)return;document.getElementById('ban-user-info').innerHTML=userInfoBlock(u);document.getElementById('ban-reason').value='';selectedDays=3;document.querySelectorAll('#ban-durations button').forEach(b=>b.classList.toggle('active',b.dataset.days==='3'));openM('m-ban')}
+function selectDur(d,btn){selectedDays=d;document.querySelectorAll('#ban-durations button').forEach(b=>b.classList.remove('active'));btn.classList.add('active')}
+async function confirmBan(){
+const u=allUsers.find(x=>x.id===targetUserId);if(!u)return;
+const reason=document.getElementById('ban-reason').value.trim();
+let until;
+if(selectedDays===-1)until=new Date(9999,11,31).toISOString();
+else until=new Date(Date.now()+selectedDays*86400000).toISOString();
+const {error}=await sb.from('profiles').update({banned_until:until,ban_reason:reason||null}).eq('id',u.id);
+if(error)return toast('Ошибка: '+error.message,true);
+closeM('m-ban');
+toast(selectedDays===-1?`@${u.nick} забанен навсегда`:`@${u.nick} забанен на ${selectedDays} дн.`);
+await loadAll();render();
+}
+
+function openUnban(id){targetUserId=id;const u=allUsers.find(x=>x.id===id);if(!u)return;document.getElementById('unban-user-info').innerHTML=userInfoBlock(u);openM('m-unban')}
+async function confirmUnban(){
+const u=allUsers.find(x=>x.id===targetUserId);if(!u)return;
+const {error}=await sb.from('profiles').update({banned_until:null,ban_reason:null}).eq('id',u.id);
+if(error)return toast('Ошибка: '+error.message,true);
+closeM('m-unban');
+toast(`@${u.nick} разбанен`);
+await loadAll();render();
+}
+
+function openDelete(id){targetUserId=id;const u=allUsers.find(x=>x.id===id);if(!u)return;document.getElementById('del-user-info').innerHTML=userInfoBlock(u);openM('m-del')}
+async function confirmDelete(){
+const u=allUsers.find(x=>x.id===targetUserId);if(!u)return;
+closeM('m-del');
+try{
+await sb.from('messages').delete().eq('sender_id',u.id);
+await sb.from('chats').delete().contains('members',[u.id]);
+await sb.from('contacts').delete().eq('owner_id',u.id);
+await sb.from('profiles').delete().eq('id',u.id);
+toast('🗑️ Удалён');
+await loadAll();render();
+}catch(e){toast('Ошибка: '+e.message,true)}
+}
+
+async function approve(id){
+const {error}=await sb.from('profiles').update({status:'approved',verification_photo:null}).eq('id',id);
+if(error)return toast('Ошибка: '+error.message,true);
+toast('✅ Одобрено, фото удалено');
+await loadAll();render();
+}
+async function reject(id){
+const {error}=await sb.from('profiles').update({status:'rejected',verification_photo:null}).eq('id',id);
+if(error)return toast('Ошибка: '+error.message,true);
+toast('❌ Отклонено, фото удалено');
+await loadAll();render();
+}
+
+/* Автообновление каждые 5 секунд */
+function startAuto(){
+if(autoTimer)clearInterval(autoTimer);
+autoTimer=setInterval(async()=>{
+const oldCount=allUsers.length;
+const oldPending=allUsers.filter(u=>u.status==='pending').length;
+await loadAll();
+const newCount=allUsers.length;
+const newPending=allUsers.filter(u=>u.status==='pending').length;
+if(newCount!==oldCount||newPending!==oldPending){
+render();
+if(newPending>oldPending)toast('🕐 Новая заявка!');
+}
+},5000);
+}
+
+/* Инициализация */
+(async function init(){
+if('serviceWorker' in navigator){try{navigator.serviceWorker.register('admin-sw.js').catch(()=>{})}catch{}}
+await loadAll();
+render();
+startAuto();
+setTimeout(showBanner,1500);
+})();
+
+/* При возврате на страницу — перезагрузка */
+document.addEventListener('visibilitychange',async()=>{
+if(document.visibilityState==='visible'){
+await loadAll();
+render();
+}
+});
+</script>
+</body>
+</html>
