@@ -1,0 +1,479 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<meta name="theme-color" content="#6b4423">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="corcal🦫">
+<link rel="manifest" href="manifest.json">
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<title>corcal🦫</title>
+<style>
+:root{--bg:#f5f5f7;--card:#fff;--text:#111;--text2:#888;--border:#e5e5e5;--accent:#6b4423;--danger:#ff3b30;--warn:#ff9500;--blue:#4285f4}
+body.dark{--bg:#0f0f12;--card:#1c1c1e;--text:#f2f2f7;--text2:#98989d;--border:#2c2c2e;--accent:#a67c52}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif}
+html,body{height:100%;overflow:hidden;background:var(--bg);color:var(--text)}
+.phone{width:100%;max-width:420px;height:100vh;height:100dvh;background:var(--bg);display:flex;flex-direction:column;margin:0 auto;position:relative;overflow:hidden}
+.screen{display:none;flex-direction:column;height:100%;background:var(--bg);position:relative}
+.screen.active{display:flex}
+.header{background:var(--card);padding:12px 14px;display:flex;align-items:center;gap:6px;border-bottom:1px solid var(--border);min-height:56px;flex-shrink:0}
+.header h1{font-size:16px;font-weight:600;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.header button{background:none;border:none;font-size:20px;cursor:pointer;color:var(--accent);padding:6px;line-height:1}
+.content{flex:1;overflow-y:auto;padding:12px;-webkit-overflow-scrolling:touch}
+.form-wrap{padding:22px;display:flex;flex-direction:column;height:100%;justify-content:center;overflow-y:auto}
+.form-wrap h2{font-size:24px;font-weight:700;margin-bottom:6px}
+.form-wrap p.sub{font-size:13px;color:var(--text2);margin-bottom:16px;line-height:1.5}
+.field{margin-bottom:10px}
+.field label{font-size:12px;color:var(--text2);display:block;margin-bottom:4px}
+.field input,.field textarea{width:100%;padding:12px 14px;border-radius:12px;border:1px solid var(--border);background:var(--card);color:var(--text);font-size:15px;outline:none;font-family:inherit}
+.field input:focus{border-color:var(--accent)}
+.field .hint{font-size:11px;color:var(--text2);margin-top:4px}
+.pass-box{border:2px solid var(--danger);border-radius:14px;padding:12px;background:rgba(255,59,48,.05);margin-bottom:10px}
+.pass-box label{color:var(--danger);font-weight:600;font-size:12px;display:block;margin-bottom:4px}
+.pass-box input{width:100%;padding:12px 14px;border-radius:12px;border:1px solid var(--danger);background:var(--card);color:var(--text);font-size:15px;outline:none;font-family:inherit}
+.pass-box .hint{color:var(--danger);font-weight:500;margin-top:8px;font-size:11px;line-height:1.5}
+.btn{width:100%;padding:13px;border-radius:12px;border:none;background:var(--accent);color:#fff;font-size:15px;font-weight:600;cursor:pointer;margin-top:6px;font-family:inherit}
+.btn:active{opacity:.85}
+.btn.sec{background:var(--border);color:var(--text)}
+.btn.dgr{background:var(--danger);color:#fff}
+.btn.sm{padding:9px;font-size:13px}
+.error{color:var(--danger);font-size:13px;margin-top:6px;min-height:14px}
+.tabs2{display:flex;gap:6px;margin-bottom:12px}
+.tabs2 button{flex:1;padding:10px;border-radius:10px;border:1px solid var(--border);background:var(--card);color:var(--text);font-size:13px;cursor:pointer;font-family:inherit}
+.tabs2 button.active{background:var(--accent);color:#fff;border-color:var(--accent)}
+.avatar{width:46px;height:46px;border-radius:50%;background:var(--accent);color:#fff;display:flex;align-items:center;justify-content:center;font-size:20px;font-weight:600;flex-shrink:0;overflow:hidden}
+.avatar.lg{width:80px;height:80px;font-size:34px}
+.avatar.xl{width:110px;height:110px;font-size:44px}
+.avatar img{width:100%;height:100%;object-fit:cover}
+.chat-item{background:var(--card);border-radius:14px;padding:12px;display:flex;align-items:center;gap:12px;margin-bottom:8px;cursor:pointer}
+.chat-info{flex:1;min-width:0}
+.chat-info .name{font-size:15px;font-weight:600}
+.chat-info .last{font-size:13px;color:var(--text2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;margin-top:2px}
+.tabs{display:flex;background:var(--card);border-top:1px solid var(--border);padding:8px 0 calc(10px + env(safe-area-inset-bottom,0px));flex-shrink:0}
+.tab{flex:1;display:flex;flex-direction:column;align-items:center;gap:2px;cursor:pointer;color:var(--text2);font-size:10px;padding:4px 0}
+.tab.active{color:var(--accent)}
+.tab .ico{font-size:20px}
+.section-title{font-size:12px;color:var(--text2);margin:12px 4px 8px;text-transform:uppercase;letter-spacing:.5px}
+.empty{text-align:center;padding:40px 20px;color:var(--text2);font-size:14px}
+.empty .ico{font-size:48px;margin-bottom:12px;opacity:.5}
+.card-block{background:var(--card);border-radius:14px;overflow:hidden;margin-bottom:12px}
+.card-row{padding:14px 16px;display:flex;align-items:center;gap:12px;border-bottom:1px solid var(--border);cursor:pointer}
+.card-row:last-child{border-bottom:none}
+.card-row .label{flex:1;font-size:15px}
+.card-row .value{font-size:13px;color:var(--text2)}
+.card-row .chev{color:var(--text2);font-size:16px}
+.card-row.danger .label{color:var(--danger)}
+.msg-row{display:flex;margin-bottom:8px;gap:6px}
+.msg-row.me{justify-content:flex-end}
+.msg-bubble{max-width:80%;padding:8px 12px;border-radius:16px;font-size:15px;background:var(--card);word-wrap:break-word;position:relative;cursor:pointer}
+.msg-row.me .msg-bubble{background:var(--accent);color:#fff}
+.msg-time{font-size:10px;opacity:.6;margin-top:4px;text-align:right}
+.msg-media{max-width:220px;border-radius:12px;display:block;margin:2px 0}
+.msg-circle{width:160px;height:160px;border-radius:50%;overflow:hidden;display:block;margin:4px 0}
+.msg-circle video{width:100%;height:100%;object-fit:cover}
+.msg-sticker{font-size:80px;line-height:1;display:block;margin:4px 0;text-align:center}
+.voice-msg{display:flex;align-items:center;gap:10px;padding:4px 2px;min-width:180px}
+.voice-play{width:36px;height:36px;border-radius:50%;background:var(--accent);color:#fff;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0}
+.msg-row.me .voice-play{background:#fff;color:var(--accent)}
+.voice-body{flex:1;min-width:0}
+.waves{display:flex;align-items:center;gap:2px;height:28px}
+.wave-bar{width:3px;background:currentColor;opacity:.3;border-radius:2px}
+.wave-bar.on{opacity:1}
+.voice-time{font-size:11px;opacity:.7;margin-top:2px}
+.reactions{display:flex;gap:4px;margin-top:4px;flex-wrap:wrap}
+.reaction{background:rgba(0,0,0,.1);border-radius:12px;padding:2px 8px;font-size:13px;display:inline-flex;gap:2px;align-items:center;cursor:pointer}
+.msg-row.me .reaction{background:rgba(255,255,255,.2)}
+.reaction.mine{background:#a67c52;color:#fff}
+.msg-reply{background:rgba(0,0,0,.1);border-left:3px solid var(--accent);padding:4px 8px;border-radius:6px;margin-bottom:4px;font-size:12px}
+.msg-row.me .msg-reply{background:rgba(255,255,255,.15);border-left-color:#fff}
+.msg-reply .author{font-weight:600;opacity:.9}
+.msg-reply .preview{opacity:.75;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;max-width:180px}
+.contact-banner{background:var(--card);border-bottom:1px solid var(--border);padding:10px 12px;display:flex;gap:8px;align-items:center;flex-shrink:0}
+.contact-banner .info{flex:1;font-size:12px;color:var(--text2);line-height:1.4}
+.contact-banner button{padding:8px 12px;border-radius:10px;border:none;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit}
+.contact-banner .add{background:var(--accent);color:#fff}
+.contact-banner .blk{background:var(--danger);color:#fff}
+.composer{padding:8px 10px;background:var(--card);border-top:1px solid var(--border);display:flex;gap:6px;align-items:center;flex-shrink:0}
+.composer input{flex:1;padding:10px 14px;border-radius:20px;border:1px solid var(--border);background:var(--bg);color:var(--text);font-size:15px;outline:none;min-width:0}
+.composer button{width:42px;height:42px;border-radius:50%;border:none;background:var(--accent);color:#fff;font-size:18px;cursor:pointer;flex-shrink:0;display:flex;align-items:center;justify-content:center;font-family:inherit}
+.composer button.attach{background:var(--border);color:var(--text)}
+.composer button.rec{background:var(--danger);animation:pulse 1s infinite}
+.composer button.dict{background:var(--blue);color:#fff;width:38px;height:38px;font-size:16px}
+.composer button.dict.on{background:#ea4335;animation:pulse 1s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.6}}
+.rec-composer{display:none;flex:1;align-items:center;gap:10px;padding:0 6px;min-width:0}
+.rec-composer.show{display:flex}
+.rec-dot{width:10px;height:10px;border-radius:50%;background:var(--danger);animation:pulse 1s infinite;flex-shrink:0}
+.rec-timer{font-size:14px;font-weight:600;flex-shrink:0;min-width:38px}
+.live-waves{flex:1;display:flex;align-items:center;gap:2px;height:32px;overflow:hidden;min-width:0}
+.live-waves .lw{width:3px;background:var(--danger);border-radius:2px;min-height:3px;flex-shrink:0;transition:height .08s}
+.rec-cancel{background:none;border:none;color:var(--danger);font-size:13px;font-weight:600;cursor:pointer;flex-shrink:0}
+.attach-panel{display:none;background:var(--card);border-top:1px solid var(--border);padding:10px;gap:6px;flex-wrap:wrap;flex-shrink:0}
+.attach-panel.show{display:flex}
+.attach-btn{flex:1;min-width:58px;padding:10px 4px;border-radius:12px;border:none;background:var(--bg);color:var(--text);font-size:10px;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:4px;font-family:inherit}
+.attach-btn .ico{font-size:20px}
+.modal-bg{position:absolute;inset:0;background:rgba(0,0,0,.6);display:none;align-items:center;justify-content:center;padding:20px;z-index:100}
+.modal-bg.show{display:flex}
+.modal{background:var(--card);border-radius:20px;padding:22px;width:100%;max-width:340px;text-align:center;max-height:88vh;overflow-y:auto}
+.modal h3{font-size:18px;margin-bottom:12px}
+.modal p{font-size:13px;color:var(--text2);margin-bottom:16px;line-height:1.5}
+.modal .row{display:flex;gap:8px;margin-top:8px}
+.modal .row button{flex:1;margin:0}
+.toast{position:absolute;bottom:90px;left:50%;transform:translateX(-50%);background:#333;color:#fff;padding:11px 18px;border-radius:12px;font-size:13px;z-index:200;display:none;max-width:90%;text-align:center}
+.toast.show{display:block}
+.toast.err{background:var(--danger)}
+.hidden-file{position:absolute;left:-9999px;top:0;width:1px;height:1px;opacity:.01;pointer-events:none}
+.emoji-grid{display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin:12px 0}
+.emoji-item{width:44px;height:44px;border-radius:50%;background:var(--bg);display:flex;align-items:center;justify-content:center;font-size:22px;cursor:pointer}
+.emoji-item.sel{background:var(--accent);color:#fff}
+.avatar-editor{width:240px;height:240px;border-radius:50%;margin:14px auto;background:#000;position:relative;overflow:hidden;cursor:move;border:3px solid var(--accent);touch-action:none}
+.avatar-editor canvas{width:100%;height:100%;display:block}
+.face-circle{width:240px;height:240px;border-radius:50%;margin:16px auto;position:relative;overflow:hidden;background:#000;border:3px solid var(--accent)}
+.face-circle video{width:100%;height:100%;object-fit:cover;transform:scaleX(-1)}
+.face-hint{text-align:center;font-size:13px;color:var(--text2);margin-top:8px}
+.call-overlay{position:absolute;inset:0;background:linear-gradient(160deg,#4a2f19,#6b4423);color:#fff;display:none;flex-direction:column;align-items:center;justify-content:space-between;padding:40px 24px;z-index:150}
+.call-overlay.show{display:flex}
+#call-video-local{position:absolute;top:20px;right:20px;width:120px;height:160px;border-radius:14px;object-fit:cover;background:#000;z-index:5;display:none;transform:scaleX(-1);border:2px solid rgba(255,255,255,.4);box-shadow:0 4px 16px rgba(0,0,0,.5);cursor:move;touch-action:none}
+#call-video-remote{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;background:#000;z-index:1;display:none}
+#group-videos{position:absolute;inset:0;display:none;z-index:2;padding:4px}
+.call-avatar{width:120px;height:120px;border-radius:50%;background:rgba(255,255,255,.15);display:flex;align-items:center;justify-content:center;font-size:52px;overflow:hidden;margin:20px 0;z-index:4;position:relative}
+.call-btns{display:flex;gap:12px;z-index:6;position:relative;flex-wrap:wrap;justify-content:center}
+.call-btn{width:58px;height:58px;border-radius:50%;border:none;font-size:20px;cursor:pointer;color:#fff;background:#333;display:flex;align-items:center;justify-content:center;font-family:inherit}
+.call-btn.dgr{background:var(--danger)}
+.call-btn.ok{background:#34c759}
+.call-btn.act{background:#fff;color:#4a2f19}
+.stories{display:flex;gap:12px;overflow-x:auto;padding:4px 0 14px}
+.story{display:flex;flex-direction:column;align-items:center;gap:6px;flex-shrink:0;cursor:pointer}
+.story .ring{width:58px;height:58px;border-radius:50%;padding:3px;background:linear-gradient(45deg,#f09433,#e6683c,#dc2743,#cc2366,#bc1888)}
+.story .ring.me{background:var(--border)}
+.story .inner{width:100%;height:100%;border-radius:50%;background:var(--card);display:flex;align-items:center;justify-content:center;border:2px solid var(--bg);font-size:22px;font-weight:600;color:var(--accent);overflow:hidden}
+.story .inner img{width:100%;height:100%;object-fit:cover}
+.story span{font-size:11px;color:var(--text2);max-width:64px;text-align:center;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.story-viewer{position:absolute;inset:0;background:#000;z-index:180;display:none;flex-direction:column;align-items:center;justify-content:center;color:#fff}
+.story-viewer.show{display:flex}
+.story-viewer img,.story-viewer video{max-width:100%;max-height:80%;object-fit:contain}
+.story-progress{position:absolute;top:8px;left:12px;right:12px;height:3px;background:rgba(255,255,255,.3);border-radius:2px;overflow:hidden}
+.story-progress-bar{height:100%;background:#fff;width:0;transition:width .1s linear}
+.msg-menu{position:absolute;background:var(--card);border-radius:12px;box-shadow:0 8px 24px rgba(0,0,0,.3);padding:4px;z-index:190;display:none;min-width:160px}
+.msg-menu.show{display:block}
+.msg-menu button{background:none;border:none;padding:10px 14px;width:100%;text-align:left;font-size:14px;color:var(--text);cursor:pointer;border-radius:8px;font-family:inherit}
+.msg-menu button.danger{color:var(--danger)}
+.msg-menu .sep{height:1px;background:var(--border);margin:4px 0}
+.msg-menu .rbar{display:flex;gap:4px;padding:6px;justify-content:center}
+.msg-menu .rbar button{background:var(--bg);border:none;font-size:22px;padding:6px 10px;border-radius:10px;cursor:pointer;width:auto}
+.doc{padding:20px;color:var(--text);font-size:14px;line-height:1.6}
+.doc h3{font-size:15px;margin:14px 0 6px}
+.doc p{color:var(--text2);margin-bottom:10px}
+.doc-scroll{flex:1;overflow-y:auto}
+.waiting{display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%;padding:40px 24px;text-align:center}
+.waiting .icon{font-size:80px;margin-bottom:20px}
+.waiting h2{font-size:22px;margin-bottom:12px}
+.waiting p{font-size:14px;color:var(--text2);line-height:1.6;margin-bottom:20px;max-width:300px}
+.waiting .status{background:var(--card);padding:14px 20px;border-radius:14px;font-size:13px;border:1px solid var(--border)}
+.waiting .status.pending{color:var(--warn);border-color:rgba(255,149,0,.3)}
+.waiting .status.rejected,.waiting .status.banned{color:var(--danger);border-color:rgba(255,59,48,.3)}
+.poll-card{background:var(--card);border-radius:14px;padding:14px;margin:4px 0;min-width:220px}
+.poll-card .poll-q{font-weight:600;margin-bottom:10px;font-size:14px}
+.poll-option{padding:10px 12px;background:var(--bg);border-radius:10px;margin-bottom:6px;cursor:pointer;position:relative;overflow:hidden;font-size:14px}
+.poll-option .bar{position:absolute;left:0;top:0;bottom:0;background:rgba(107,68,35,.2);z-index:0}
+.poll-option .txt{position:relative;z-index:1;display:flex;justify-content:space-between;gap:10px}
+.poll-option.voted{font-weight:600}
+.member-item{display:flex;align-items:center;gap:8px;padding:6px;background:var(--bg);border-radius:10px;margin-bottom:4px}
+.member-item .av{width:32px;height:32px;border-radius:50%;background:var(--accent);color:#fff;display:flex;align-items:center;justify-content:center;font-size:14px;overflow:hidden;flex-shrink:0}
+.member-item .av img{width:100%;height:100%;object-fit:cover}
+.poll-opt-row{display:flex;gap:6px;margin-bottom:6px}
+.poll-opt-row input{flex:1;padding:10px 12px;border-radius:10px;border:1px solid var(--border);background:var(--card);color:var(--text);font-size:14px;outline:none;font-family:inherit}
+.poll-opt-row button{width:40px;border-radius:10px;border:none;background:var(--danger);color:#fff;cursor:pointer;font-size:16px}
+.game-cell{width:60px;height:60px;display:flex;align-items:center;justify-content:center;font-size:32px;background:var(--bg);border-radius:8px;cursor:pointer}
+.game-cell.dis{background:var(--border);cursor:default}
+.sticker-panel{position:absolute;left:0;right:0;bottom:0;background:var(--card);border-top:1px solid var(--border);padding:10px;max-height:250px;overflow-y:auto;display:none;z-index:50}
+.sticker-panel.show{display:block}
+.sticker-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:6px}
+.sticker-item{background:var(--bg);border:none;font-size:32px;padding:8px;border-radius:12px;cursor:pointer;font-family:inherit}
+</style>
+</head>
+<body>
+<div class="phone">
+<div class="screen active" id="sc-load"><div class="form-wrap" style="text-align:center"><h2>corcal🦫</h2><p class="sub">Подключение...</p></div></div>
+<div class="screen" id="sc-auth">
+<div class="form-wrap">
+<h2 id="auth-title">Регистрация</h2>
+<p class="sub" id="auth-sub">Заполните данные. После проверки вы получите доступ.</p>
+<div class="tabs2">
+<button id="tab-reg" class="active" onclick="switchAuth('reg')">Регистрация</button>
+<button id="tab-log" onclick="switchAuth('log')">Вход</button>
+</div>
+<div id="form-reg">
+<div class="field"><label>Номер телефона</label><input type="tel" id="r-phone" placeholder="+79991234567" inputmode="tel"></div>
+<div class="field"><label>Имя</label><input type="text" id="r-first" placeholder="Иван"></div>
+<div class="field"><label>Фамилия</label><input type="text" id="r-last" placeholder="Иванов"></div>
+<div class="field"><label>Дата рождения</label><input type="date" id="r-birth"></div>
+<div class="field"><label>Ник (виден другим)</label><input type="text" id="r-nick" placeholder="cool_cat" maxlength="20" oninput="checkNickHint()"><div class="hint" id="nick-hint"></div></div>
+<div class="pass-box"><label>🔐 Пароль (минимум 6 символов)</label><input type="password" id="r-pass" placeholder="••••••"><div class="hint">⚠️ Пароль нельзя восстановить!<br>Запомните его или запишите в надёжном месте.</div></div>
+<div class="field"><label>Аватар</label>
+<div style="display:flex;align-items:center;gap:10px">
+<div class="avatar lg" id="r-av">🦫</div>
+<div style="flex:1">
+<button class="btn sm" style="width:100%" onclick="triggerAvatar('reg')">📷 Фото</button>
+<button class="btn sec sm" style="width:100%;margin-top:6px" onclick="openEmojiPick('reg')">😀 Эмодзи</button>
+</div>
+</div>
+</div>
+<div class="error" id="r-err"></div>
+<button class="btn" onclick="register()" id="btn-reg">Продолжить →</button>
+</div>
+<div id="form-log" style="display:none">
+<div class="field"><label>Номер телефона</label><input type="tel" id="l-phone" placeholder="+79991234567" inputmode="tel"></div>
+<div class="field"><label>Пароль</label><input type="password" id="l-pass" placeholder="••••••"></div>
+<div class="error" id="l-err"></div>
+<button class="btn" onclick="login()" id="btn-log">Войти</button>
+</div>
+</div>
+</div>
+<div class="screen" id="sc-face">
+<div class="header"><button onclick="cancelFace()">←</button><h1>Проверка лица</h1></div>
+<div class="content" style="display:flex;flex-direction:column;align-items:center;justify-content:center;padding:20px">
+<h3 style="font-size:18px;margin-bottom:6px;text-align:center">Поместите лицо в круг</h3>
+<p style="font-size:13px;color:var(--text2);text-align:center;margin-bottom:10px;line-height:1.5">Это нужно для безопасности. Фото увидит только модератор.</p>
+<div class="face-circle"><video id="face-video" autoplay muted playsinline></video></div>
+<div class="face-hint">Смотрите прямо в камеру</div>
+<div style="width:100%;margin-top:20px">
+<button class="btn" onclick="captureFace()">📸 Сделать фото</button>
+<button class="btn sec" onclick="cancelFace()">Отмена</button>
+</div>
+</div>
+</div>
+<div class="screen" id="sc-wait">
+<div class="waiting">
+<div class="icon" id="wait-icon">🕐</div>
+<h2 id="wait-title">Заявка отправлена</h2>
+<p id="wait-text">Ваша заявка на рассмотрении. Обычно это занимает несколько часов.</p>
+<div class="status pending" id="wait-status">🕐 Статус: на проверке</div>
+<button class="btn sec" style="margin-top:20px;max-width:200px" onclick="checkStatus()">🔄 Проверить</button>
+<button class="btn sec" style="margin-top:8px;max-width:200px" onclick="logout()">Выйти</button>
+</div>
+</div>
+<div class="screen" id="sc-main">
+<div class="header"><h1 id="main-title">Чаты</h1><button onclick="refreshAll()">🔄</button></div>
+<div class="content" id="main-content"></div>
+<div class="tabs">
+<div class="tab active" data-t="chats" onclick="switchTab('chats')"><div class="ico">💬</div>Чаты</div>
+<div class="tab" data-t="contacts" onclick="switchTab('contacts')"><div class="ico">👥</div>Контакты</div>
+<div class="tab" data-t="profile" onclick="switchTab('profile')"><div class="ico">👤</div>Профиль</div>
+<div class="tab" data-t="settings" onclick="switchTab('settings')"><div class="ico">⚙️</div>Ещё</div>
+</div>
+</div>
+<div class="screen" id="sc-chat">
+<div class="header">
+<button onclick="closeChat()">←</button>
+<h1 id="chat-title">Чат</h1>
+<button onclick="startCall('audio')" title="Аудио">📞</button>
+<button onclick="startCall('video')" title="Видео">📹</button>
+<button onclick="openChatMenu()" title="Ещё">⋮</button>
+</div>
+<div id="contact-banner"></div>
+<div class="content" id="chat-msgs" style="display:flex;flex-direction:column;position:relative"></div>
+<div class="attach-panel" id="attach-panel">
+<button class="attach-btn" onclick="pickPhoto()"><span class="ico">🖼️</span>Фото</button>
+<button class="attach-btn" onclick="startCircle()"><span class="ico">⭕</span>Кружок</button>
+<button class="attach-btn" id="btn-poll" onclick="openPollCreator()" style="display:none"><span class="ico">📊</span>Опрос</button>
+<button class="attach-btn" onclick="openGames()"><span class="ico">🎮</span>Игра</button>
+<button class="attach-btn" onclick="openDraw()"><span class="ico">🎨</span>Рисунок</button>
+<button class="attach-btn" onclick="toggleStickers()"><span class="ico">😀</span>Стикер</button>
+</div>
+<div class="composer" id="composer">
+<button class="attach" id="btn-attach" onclick="toggleAttach()">＋</button>
+<input type="text" id="msg-input" placeholder="Сообщение..." oninput="updComposer()" onkeypress="if(event.key==='Enter')sendText()">
+<div class="rec-composer" id="rec-composer">
+<div class="rec-dot"></div>
+<div class="rec-timer" id="rec-timer">0:00</div>
+<div class="live-waves" id="live-waves"></div>
+<button class="rec-cancel" onclick="cancelVoice()">Отмена</button>
+</div>
+<button class="dict" id="dict-btn" onclick="toggleDict()" title="Диктовка">✍️</button>
+<button id="composer-btn" onclick="composerAction()">🎤</button>
+</div>
+<div class="sticker-panel" id="sticker-panel"><div class="sticker-grid" id="sticker-grid"></div></div>
+</div>
+<div class="screen" id="sc-doc">
+<div class="header"><button onclick="closeDoc()">←</button><h1 id="doc-title">Правила</h1></div>
+<div class="doc-scroll"><div class="doc" id="doc-content"></div></div>
+</div>
+<div class="modal-bg" id="m-add"><div class="modal"><h3>Найти по номеру</h3><p>Введите номер друга</p>
+<div class="field"><input type="tel" id="find-phone" placeholder="+79991234567" inputmode="tel"></div>
+<div class="row"><button class="btn sec" onclick="closeM('m-add')">Отмена</button><button class="btn" onclick="findContact()">Найти</button></div>
+</div></div>
+<div class="modal-bg" id="m-name"><div class="modal"><h3>Как назвать контакт?</h3>
+<div class="field"><input type="text" id="name-input" placeholder="Имя" maxlength="30"></div>
+<div class="row"><button class="btn sec" onclick="closeM('m-name')">Отмена</button><button class="btn" onclick="saveName()">Сохранить</button></div>
+</div></div>
+<div class="modal-bg" id="m-photo-source"><div class="modal">
+<h3>📷 Отправить фото</h3>
+<p>Выберите способ</p>
+<button class="btn" style="margin-bottom:8px" onclick="photoSource('cam')">📷 Сфотографировать</button>
+<button class="btn sec" style="margin-bottom:8px" onclick="photoSource('gal')">🖼️ Выбрать из галереи</button>
+<button class="btn sec" style="margin-top:8px" onclick="closeM('m-photo-source')">Отмена</button>
+</div></div>
+<div class="modal-bg" id="m-parent"><div class="modal" style="text-align:left">
+<h3 style="text-align:center">👨‍👦 Родительский контроль</h3>
+<p style="text-align:center">Вам 13–17 лет. Укажите данные родителя — он получит уведомление.</p>
+<div class="field"><label>Телефон родителя</label><input type="tel" id="parent-phone" placeholder="+79991234567"></div>
+<div class="field"><label>Кто это?</label>
+<div style="display:flex;gap:8px">
+<button class="btn sec" id="par-mom" onclick="pickParentType('mom')" style="flex:1">👩 Мама</button>
+<button class="btn sec" id="par-dad" onclick="pickParentType('dad')" style="flex:1">👨 Папа</button>
+</div>
+</div>
+<div class="row"><button class="btn sec" onclick="closeM('m-parent')">Отмена</button><button class="btn" onclick="saveParent()">Отправить</button></div>
+</div></div>
+<div class="modal-bg" id="m-emoji"><div class="modal"><h3>Аватар</h3>
+<div class="emoji-grid" id="emoji-grid"></div>
+<button class="btn sec" onclick="closeM('m-emoji')">Закрыть</button></div></div>
+<div class="modal-bg" id="m-edit"><div class="modal" style="text-align:left">
+<h3 style="text-align:center">Редактировать</h3>
+<div class="field"><label>Ник</label><input type="text" id="e-nick"></div>
+<div class="field"><label>Описание</label><textarea id="e-bio" rows="2"></textarea></div>
+<div class="field"><label>Аватар</label>
+<div style="display:flex;align-items:center;gap:10px">
+<div class="avatar lg" id="e-av">🦫</div>
+<div style="flex:1">
+<button class="btn sm" style="width:100%" onclick="triggerAvatar('edit')">📷 Фото</button>
+<button class="btn sec sm" style="width:100%;margin-top:6px" onclick="openEmojiPick('edit')">😀 Эмодзи</button>
+</div>
+</div>
+</div>
+<div class="row"><button class="btn sec" onclick="closeM('m-edit')">Отмена</button><button class="btn" onclick="saveProfile()">Сохранить</button></div>
+</div></div>
+<div class="modal-bg" id="m-del"><div class="modal"><h3>Удалить аккаунт?</h3><p>Все данные и сообщения будут удалены безвозвратно.</p>
+<div class="row"><button class="btn sec" onclick="closeM('m-del')">Нет</button><button class="btn dgr" onclick="confirmDelete()">Да</button></div>
+</div></div>
+<div class="modal-bg" id="m-avatar"><div class="modal">
+<h3>Обрежьте фото</h3>
+<div class="avatar-editor" id="avatar-editor"><canvas id="avatar-canvas" width="240" height="240"></canvas></div>
+<input type="range" id="avatar-zoom" min="1" max="3" step="0.01" value="1" style="width:100%;margin:8px 0">
+<div class="row"><button class="btn sec" onclick="cancelAvatarEditor()">Отмена</button><button class="btn" onclick="applyAvatarCrop()">Готово</button></div>
+</div></div>
+<div class="modal-bg" id="m-circle"><div class="modal">
+<h3>Кружок</h3>
+<video id="circle-video" autoplay muted playsinline style="width:180px;height:180px;border-radius:50%;object-fit:cover;margin:8px auto;display:block;transform:scaleX(-1)"></video>
+<div id="circle-timer" style="font-size:14px;color:var(--text2);margin:6px 0">0:00</div>
+<div style="font-size:11px;color:var(--text2);text-align:center;margin-bottom:8px">Максимум 15 секунд</div>
+<div class="row"><button class="btn sec" onclick="cancelCircle()">Отмена</button><button class="btn" onclick="sendCircle()">Отправить</button></div>
+</div></div>
+<div class="modal-bg" id="m-notif"><div class="modal"><h3>🔔 Уведомления</h3><p>Разрешить уведомления о новых сообщениях?</p>
+<div class="row"><button class="btn sec" onclick="closeM('m-notif')">Позже</button><button class="btn" onclick="allowNotif()">Разрешить</button></div>
+</div></div>
+<div class="modal-bg" id="m-group"><div class="modal" style="text-align:left">
+<h3 style="text-align:center">Создать группу</h3>
+<div class="field"><label>Название</label><input type="text" id="group-name" placeholder="Моя группа"></div>
+<div class="field"><label>Тип</label>
+<div style="display:flex;gap:6px;flex-wrap:wrap">
+<button class="btn sec sm" id="gt-regular" onclick="pickGroupType('regular')" style="flex:1">👥 Обычная</button>
+<button class="btn sec sm" id="gt-family" onclick="pickGroupType('family')" style="flex:1">👨‍👩‍👧 Семейная</button>
+</div>
+</div>
+<div class="field">
+<label>Участники (макс. 5 человек)</label>
+<div style="background:var(--bg);border-radius:12px;padding:10px;margin-bottom:8px">
+<input type="tel" id="group-add-phone" placeholder="+79991234567" inputmode="tel" style="width:100%;padding:10px 12px;border-radius:10px;border:1px solid var(--border);background:var(--card);color:var(--text);font-size:14px;outline:none;margin-bottom:6px">
+<button class="btn sm" style="width:100%" onclick="addGroupMemberByPhone()">+ Добавить по номеру</button>
+</div>
+<div id="group-members-list" style="font-size:13px;color:var(--text2)">Никого не добавлено</div>
+</div>
+<div class="row"><button class="btn sec" onclick="closeM('m-group')">Отмена</button><button class="btn" onclick="createGroup()">Создать</button></div>
+</div></div>
+<div class="modal-bg" id="m-channel"><div class="modal" style="text-align:left">
+<h3 style="text-align:center">📢 Создать канал</h3>
+<div class="field"><label>Название канала</label><input type="text" id="channel-name" placeholder="Мой канал"></div>
+<div class="field"><label>Описание</label><textarea id="channel-desc" rows="2"></textarea></div>
+<div class="row"><button class="btn sec" onclick="closeM('m-channel')">Отмена</button><button class="btn" onclick="createChannel()">Создать</button></div>
+</div></div>
+<div class="modal-bg" id="m-poll"><div class="modal" style="text-align:left">
+<h3 style="text-align:center">📊 Создать опрос</h3>
+<div class="field"><label>Вопрос</label><input type="text" id="poll-q" placeholder="Ваш вопрос"></div>
+<div class="field"><label>Варианты (минимум 2)</label>
+<div id="poll-options"></div>
+<button class="btn sec sm" style="margin-top:6px;width:100%" onclick="addPollOption()">+ Добавить вариант</button>
+</div>
+<div class="row"><button class="btn sec" onclick="closeM('m-poll')">Отмена</button><button class="btn" onclick="createPoll()">Создать</button></div>
+</div></div>
+<div class="modal-bg" id="m-games"><div class="modal">
+<h3>🎮 Мини-игры</h3>
+<p>Выберите игру — она откроется в чате</p>
+<button class="btn" style="margin-bottom:6px" onclick="startGame('tictactoe')">❌⭕ Крестики-нолики</button>
+<button class="btn sec" style="margin-bottom:6px" onclick="startGame('rps')">✊✋✌️ Камень-ножницы</button>
+<button class="btn sec" style="margin-bottom:6px" onclick="startGame('guess')">🔢 Угадай число</button>
+<button class="btn sec" style="margin-top:14px" onclick="closeM('m-games')">Закрыть</button>
+</div></div>
+<div class="modal-bg" id="m-draw"><div class="modal" style="max-width:360px">
+<h3>🎨 Рисунок</h3>
+<canvas id="draw-canvas" width="300" height="300" style="width:100%;border-radius:14px;background:#fff;touch-action:none;display:block;margin:10px auto;border:1px solid var(--border)"></canvas>
+<div style="display:flex;gap:6px;justify-content:center;margin:10px 0;flex-wrap:wrap">
+<button onclick="setDrawColor('#000')" style="width:32px;height:32px;border-radius:50%;background:#000;border:2px solid var(--border);cursor:pointer"></button>
+<button onclick="setDrawColor('#ff3b30')" style="width:32px;height:32px;border-radius:50%;background:#ff3b30;border:2px solid var(--border);cursor:pointer"></button>
+<button onclick="setDrawColor('#6b4423')" style="width:32px;height:32px;border-radius:50%;background:#6b4423;border:2px solid var(--border);cursor:pointer"></button>
+<button onclick="setDrawColor('#4285f4')" style="width:32px;height:32px;border-radius:50%;background:#4285f4;border:2px solid var(--border);cursor:pointer"></button>
+<button onclick="setDrawColor('#ffcc00')" style="width:32px;height:32px;border-radius:50%;background:#ffcc00;border:2px solid var(--border);cursor:pointer"></button>
+</div>
+<input type="range" id="draw-size" min="1" max="20" value="4" style="width:100%;margin:6px 0">
+<div class="row"><button class="btn sec" onclick="clearDraw()">Очистить</button><button class="btn" onclick="sendDraw()">Отправить</button></div>
+<button class="btn sec" style="margin-top:8px;width:100%" onclick="closeM('m-draw')">Отмена</button>
+</div></div>
+<div class="modal-bg" id="m-themes"><div class="modal">
+<h3>🎨 Тема чата</h3>
+<p>Выберите цвет обоев</p>
+<div id="theme-colors" style="display:flex;flex-wrap:wrap;gap:8px;justify-content:center;margin:12px 0"></div>
+<button class="btn sec" onclick="resetTheme()">Сбросить</button>
+<button class="btn sec" style="margin-top:6px" onclick="closeM('m-themes')">Закрыть</button>
+</div></div>
+<div class="modal-bg" id="m-disappear"><div class="modal">
+<h3>⏱️ Исчезающие сообщения</h3>
+<p>Через сколько секунд после прочтения удалять сообщения?</p>
+<div style="display:grid;grid-template-columns:repeat(2,1fr);gap:6px;margin-bottom:12px">
+<button class="btn sec" onclick="setDisappear(0)">Выключено</button>
+<button class="btn sec" onclick="setDisappear(5)">5 сек</button>
+<button class="btn sec" onclick="setDisappear(10)">10 сек</button>
+<button class="btn sec" onclick="setDisappear(30)">30 сек</button>
+<button class="btn sec" onclick="setDisappear(60)">1 мин</button>
+<button class="btn sec" onclick="setDisappear(300)">5 мин</button>
+</div>
+<button class="btn sec" onclick="closeM('m-disappear')">Закрыть</button>
+</div></div>
+<div class="modal-bg" id="m-chatmenu"><div class="modal" style="text-align:left"><div id="chat-menu-content"></div></div></div>
+<div class="call-overlay" id="call-overlay">
+<div id="call-secure-info" style="display:none;position:absolute;top:12px;left:0;right:0;text-align:center;z-index:7;pointer-events:none">
+<div style="display:inline-block;background:rgba(0,0,0,.5);padding:8px 16px;border-radius:12px;backdrop-filter:blur(10px);max-width:90%">
+<div style="font-size:13px;font-weight:600;margin-bottom:4px">🔒 Звонок зашифрован</div>
+<div id="call-code" style="font-size:10px;opacity:.7;font-family:monospace;letter-spacing:1px;line-height:1.4"></div>
+</div>
+</div>
+<div id="group-videos"></div>
+<video id="call-video-remote" autoplay playsinline></video>
+<video id="call-video-local" autoplay muted playsinline></video>
+<div style="text-align:center;z-index:6;position:relative">
+<div style="font-size:22px;font-weight:700" id="call-who">—</div>
+<div style="font-size:14px;color:rgba(255,255,255,.7);margin-top:6px" id="call-status">—</div>
+</div>
+<div class="call-avatar" id="call-av">🦫</div>
+<div class="call-btns" id="call-btns"></div>
+</div>
+<div class="story-viewer" id="story-viewer">
+<div class="story-progress"><div class="story-progress-bar" id="story-progress"></div></div>
+<button onclick="closeStory()" style="position:absolute;top:20px;right:20px;background:none;border:none;color:#fff;font-size:28px;cursor:pointer;z-index:5">×</button>
+<div id="story-content"></div>
+</div>
+<div class="msg-menu" id="msg-menu"></div>
+<div class="toast" id="toast"></div>
+<input type="file" id="f-photo" accept="image/*" class="hidden-file">
+<input type="file" id="f-photo-cam" accept="image/*" capture="environment" class="hidden-file">
+<input type="file" id="f-story" accept="image/*,video/*" class="hidden-file">
+<input type="file" id="f-story-cam" accept="image/*" capture="environment" class="hidden-file">
+<input type="file" id="f-avatar" accept="image/*" class="hidden-file">
+<input type="file" id="f-avatar-cam" accept="image/*" capture="user" class="hidden-file">
+</div>
+<script src="app.js"></script>
+<script src="app2.js"></script>
+</body>
+</html>
